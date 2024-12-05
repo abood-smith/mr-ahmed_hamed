@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم المعلم</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+        header {
+            background-color: #4CAF50;
+            padding: 20px;
+            color: white;
+            font-size: 24px;
+        }
+        main {
+            padding: 20px;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        li {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        button {
+            padding: 5px 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button.delete-btn {
+            background-color: red;
+        }
+    </style>
+</head>
+<body>
+    <header>لوحة تحكم المعلم</header>
+    <main>
+        <h2>الامتحانات</h2>
+        <ul id="examList"></ul>
+    </main>
+    <script>
+        const exams = JSON.parse(localStorage.getItem('exams')) || [];
+
+        function renderExams() {
+            const examList = document.getElementById('examList');
+            examList.innerHTML = '';
+            exams.forEach((exam, index) => {
+                const stats = JSON.parse(localStorage.getItem('examStats')) || {};
+                const participants = stats[exam.title] ? stats[exam.title].length : 0;
+
+                const li = document.createElement('li');
+                li.className = 'exam-item';
+                li.innerHTML = `
+                    <span>${exam.title} - ${participants} طالب</span>
+                    <div>
+                        <button class="delete-btn" onclick="deleteExam(${index})">حذف</button>
+                        <button onclick="viewParticipants('${exam.title}')">عرض الطلاب</button>
+                    </div>
+                `;
+                examList.appendChild(li);
+            });
+        }
+
+        function deleteExam(index) {
+            if (confirm('هل أنت متأكد من حذف هذا الامتحان؟')) {
+                const examTitle = exams[index].title;
+                exams.splice(index, 1);
+                localStorage.setItem('exams', JSON.stringify(exams));
+
+                const stats = JSON.parse(localStorage.getItem('examStats')) || {};
+                delete stats[examTitle];
+                localStorage.setItem('examStats', JSON.stringify(stats));
+
+                renderExams();
+            }
+        }
+
+        function viewParticipants(examTitle) {
+            const stats = JSON.parse(localStorage.getItem('examStats')) || {};
+            const participants = stats[examTitle] || [];
+            if (participants.length === 0) {
+                alert('لا يوجد طلاب أدوا هذا الامتحان.');
+                return;
+            }
+            const studentList = participants.map(p => `${p.name}: ${p.score}`).join('\n');
+            alert(`الطلاب الذين أدوا الامتحان:\n${studentList}`);
+        }
+
+        renderExams();
+    </script>
+</body>
+</html>

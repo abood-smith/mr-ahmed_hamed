@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حل الامتحان</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+        header {
+            background-color: #4CAF50;
+            padding: 20px;
+            color: white;
+            font-size: 24px;
+        }
+        main {
+            padding: 20px;
+        }
+        button {
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        button:disabled {
+            background-color: grey;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <header>حل الامتحان</header>
+    <main>
+        <h2 id="examTitle"></h2>
+        <form id="examForm"></form>
+        <button id="submitExam" onclick="submitAnswers()">رفع الامتحان</button>
+        <div id="result"></div>
+    </main>
+    <script>
+        const exam = JSON.parse(localStorage.getItem('currentExam'));
+        const studentName = prompt('أدخل اسمك:');
+        const answers = [];
+        
+        if (!exam) {
+            alert('لا يوجد امتحان.');
+            window.location.href = 'student.html';
+        }
+
+        document.getElementById('examTitle').textContent = exam.title;
+
+        function renderQuestions() {
+            const examForm = document.getElementById('examForm');
+            exam.questions.forEach((question, index) => {
+                const questionDiv = document.createElement('div');
+                questionDiv.innerHTML = `
+                    <p><strong>س${index + 1}: ${question.text}</strong></p>
+                    ${question.options.map((option, i) => `
+                        <label>
+                            <input type="radio" name="q${index}" value="${i + 1}">
+                            ${option}
+                        </label><br>
+                    `).join('')}
+                `;
+                examForm.appendChild(questionDiv);
+            });
+        }
+
+        function submitAnswers() {
+            const examForm = document.getElementById('examForm');
+            const resultDiv = document.getElementById('result');
+            let correctAnswers = 0;
+
+            exam.questions.forEach((question, index) => {
+                const selectedAnswer = examForm[`q${index}`]?.value;
+                answers.push(selectedAnswer || '0');
+                if (selectedAnswer == question.correct) {
+                    correctAnswers++;
+                }
+            });
+
+            // تعطيل الزر
+            document.getElementById('submitExam').disabled = true;
+
+            // عرض النتيجة
+            resultDiv.innerHTML = `
+                <h3>نتيجتك: ${correctAnswers}/${exam.questions.length}</h3>
+                <h4>الإجابات الصحيحة:</h4>
+                <ul>
+                    ${exam.questions.map((q, i) => `
+                        <li>س${i + 1}: ${q.options[q.correct - 1]}</li>
+                    `).join('')}
+                </ul>
+            `;
+
+            // تخزين بيانات الطالب
+            const examStats = JSON.parse(localStorage.getItem('examStats')) || {};
+            if (!examStats[exam.title]) examStats[exam.title] = [];
+            examStats[exam.title].push({ name: studentName, score: correctAnswers });
+            localStorage.setItem('examStats', JSON.stringify(examStats));
+        }
+
+        renderQuestions();
+    </script>
+</body>
+</html>
